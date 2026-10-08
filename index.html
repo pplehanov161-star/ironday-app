@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Железный день</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: one mobile column (max 520px), sticky header, fixed bottom tab bar like a native Telegram Mini App */
+:root{
+  --bg:#EDF0F4; --surface:#FFFFFF; --ink:#14181F; --muted:#5B6573; --line:#D6DCE3;
+  --accent:#1F4FD8; --on-accent:#FFFFFF; --soft:#E3E9F8;
+  --red:#D7322E; --yellow:#D99A00; --green:#2E9B57;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1116; --surface:#171B22; --ink:#E8ECF1; --muted:#95A0AE; --line:#2A313B;
+  --accent:#7290FF; --on-accent:#0B0E14; --soft:#1E2740;
+  --red:#F0605A; --yellow:#F2C14E; --green:#4CC37C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1116; --surface:#171B22; --ink:#E8ECF1; --muted:#95A0AE; --line:#2A313B;
+  --accent:#7290FF; --on-accent:#0B0E14; --soft:#1E2740;
+  --red:#F0605A; --yellow:#F2C14E; --green:#4CC37C; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.app{max-width:520px;margin:0 auto;padding-inline:16px;padding-block:8px calc(88px + env(safe-area-inset-bottom,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand b{color:var(--accent)}
+.date{color:var(--muted);font-size:13px}
+h2{font-family:var(--display);font-weight:500;font-size:20px;margin:18px 0 10px;text-wrap:balance}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:22px 0 8px;font-weight:600}
+.card{background:var(--surface);border-radius:var(--r);padding:16px;border:1px solid var(--line)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.hero{background:var(--accent);color:var(--on-accent);border:0;position:relative;overflow:hidden}
+.hero .k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;opacity:.85}
+.hero .t{font-family:var(--display);font-size:24px;font-weight:700;margin:4px 0 2px;text-wrap:balance}
+.hero .s{opacity:.9;font-size:14px}
+.plates{position:absolute;right:-18px;top:-18px;display:flex;gap:4px;opacity:.22}
+.plates i{display:block;width:16px;border-radius:4px;background:var(--on-accent)}
+.ex{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}
+.ex:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ex canvas{width:64px;height:54px;border-radius:8px;background:var(--bg)}
+.ex .n{font-weight:600}
+.ex .m{font-size:13px;color:var(--muted)}
+.ex .sr{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;white-space:nowrap}
+.ex.done{opacity:.55}
+.ex.done .n{text-decoration:line-through}
+.chk{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;background:transparent;cursor:pointer;color:var(--on-accent)}
+.chk.on{background:var(--green);border-color:var(--green)}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:500;padding:10px 6px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--on-accent)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 0;font:inherit;font-weight:600;cursor:pointer}
+.days button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.week{display:flex;flex-direction:column;gap:6px}
+.wd{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.wd.today{border-color:var(--accent)}
+.wd .d{font-weight:600}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.tag::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c,var(--muted))}
+.field{display:flex;flex-direction:column;gap:4px;flex:1 1 130px;min-width:0}
+.field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat .v{font-family:var(--display);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .l{font-size:12px;color:var(--muted)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.meal{display:flex;flex-direction:column;gap:6px}
+.meal .h{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.meal ul{margin:0;padding-left:18px;color:var(--ink)}
+.meal li{margin:2px 0}
+.btn{border:0;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:600;padding:14px;border-radius:12px;cursor:pointer;width:100%}
+.btn.ghost{background:var(--soft);color:var(--accent)}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.filters button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.filters button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+nav.tabs .in{display:grid;grid-template-columns:repeat(5,1fr);max-width:520px;width:100%}
+nav.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button.on{color:var(--accent)}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(8,10,14,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet .p{background:var(--bg);width:100%;max-width:520px;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet canvas{width:100%;aspect-ratio:6/5;max-width:100%;background:var(--surface);border-radius:var(--r);border:1px solid var(--line);display:block}
+.sheet ol{padding-left:20px;margin:6px 0}
+.sheet ol li{margin:4px 0}
+.x{border:0;background:var(--surface);color:var(--ink);width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;flex:none}
+.timer{font-family:var(--display);font-size:28px;font-variant-numeric:tabular-nums;text-align:center}
+.note{font-size:13px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--accent);font-weight:600}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+</head><body>
+
+<div class="app">
+  <header class="top"><div class="brand">Железный <b>день</b></div><div class="date num" id="today"></div></header>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs"><div class="in" id="tabs"></div></nav>
+<div class="sheet" id="sheet" hidden><div class="p" id="sheetBody"></div></div>
+
+<script>
+(function(){
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg){ try{ tg.ready(); tg.expand(); if(tg.colorScheme) document.documentElement.dataset.theme = tg.colorScheme; }catch(e){} }
+const haptic = t => { try{ tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} };
+
+/* ---------- state ---------- */
+const KEY='ironday.v1';
+const DEF={tab:'today',profile:{sex:'m',age:27,height:178,weight:76,goal:'mass',level:'beginner'},
+  place:'gym',equip:{dumbbell:false,bar:true,chair:true},type:'full',days:[0,2,4],time:'19:00',checks:{},history:[]};
+let S;
+try{ S=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}')); }catch(e){ S=JSON.parse(JSON.stringify(DEF)); }
+S.profile=Object.assign({},DEF.profile,S.profile); S.equip=Object.assign({},DEF.equip,S.equip);
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} };
+
+/* ---------- stick-figure animation (two-bone IK between two key poses) ---------- */
+const L={torso:50,thigh:44,shin:42,uarm:30,farm:28};
+const FLOOR=185;
+function ik(a,t,l1,l2,s){
+  const dx=t[0]-a[0],dy=t[1]-a[1],d=Math.hypot(dx,dy);
+  const dc=Math.min(l1+l2-.5,Math.max(Math.abs(l1-l2)+.5,d));
+  const phi=Math.atan2(dy,dx);
+  let c=(l1*l1+dc*dc-l2*l2)/(2*l1*dc); c=Math.max(-1,Math.min(1,c));
+  const al=Math.acos(c);
+  return [[a[0]+l1*Math.cos(phi+s*al),a[1]+l1*Math.sin(phi+s*al)],[a[0]+dc*Math.cos(phi),a[1]+dc*Math.sin(phi)]];
+}
+const lerp=(a,b,t)=>a+(b-a)*t;
+const lp=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t)];
+function blend(A,B,t){
+  const o={};
+  for(const k of ['hip','sh','ank','ank2','wr','wrR','wr2'])
+    if(A[k]) o[k]=lp(A[k],B[k]||A[k],t);
+  if(A.lean!=null) o.lean=lerp(A.lean,B.lean,t);
+  o.ls=A.ls||-1; o.es=A.es||1;
+  return o;
+}
+function solve(p){
+  const hip=p.hip; let dir;
+  if(p.sh){ const dx=p.sh[0]-hip[0],dy=p.sh[1]-hip[1],d=Math.hypot(dx,dy)||1; dir=[dx/d,dy/d]; }
+  else { const r=p.lean*Math.PI/180; dir=[Math.sin(r),-Math.cos(r)]; }
+  const sh=[hip[0]+dir[0]*L.torso,hip[1]+dir[1]*L.torso];
+  const head=[sh[0]+dir[0]*15,sh[1]+dir[1]*15];
+  const wr=p.wr||[sh[0]+p.wrR[0],sh[1]+p.wrR[1]];
+  const [knee,ank]=ik(hip,p.ank,L.thigh,L.shin,p.ls);
+  const [knee2,ank2]=ik(hip,p.ank2||p.ank,L.thigh,L.shin,p.ls);
+  const [elb,hand]=ik(sh,wr,L.uarm,L.farm,p.es);
+  const [elb2,hand2]=ik(sh,p.wr2||wr,L.uarm,L.farm,p.es);
+  return {hip,sh,head,knee,ank,knee2,ank2,elb,hand,elb2,hand2};
+}
+function toe(a){
+  if(a[1]>168){ const dy=Math.min(11,FLOOR-1-a[1]); return [a[0]+Math.sqrt(Math.max(16,144-dy*dy)),FLOOR-1]; }
+  return [a[0]+5,a[1]+10];
+}
+let COL={};
+function readCols(){ const cs=getComputedStyle(document.documentElement); COL={ink:cs.getPropertyValue('--ink').trim(),muted:cs.getPropertyValue('--muted').trim(),line:cs.getPropertyValue('--line').trim(),accent:cs.getPropertyValue('--accent').trim(),bg:cs.getPropertyValue('--surface').trim()}; }
+function drawFig(ctx,ex,t,W,H){
+  const sc=Math.min(W/240,H/212); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
+  ctx.setTransform(sc,0,0,sc,(W-240*sc)/2,(H-212*sc)/2+16*sc);
+  const P=solve(blend(ex.A,ex.B,t)), pr=ex.props||{};
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  // props behind
+  ctx.fillStyle=COL.line; ctx.strokeStyle=COL.line;
+  if(!pr.noFloor){ ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(4,FLOOR+1); ctx.lineTo(236,FLOOR+1); ctx.stroke(); }
+  if(pr.bench){ const [x1,x2,y]=pr.bench; ctx.fillRect(x1,y,x2-x1,7); ctx.fillRect(x1+6,y,5,FLOOR-y); ctx.fillRect(x2-11,y,5,FLOOR-y); }
+  if(pr.pullbar){ ctx.lineWidth=5; ctx.strokeStyle=COL.muted; ctx.beginPath(); ctx.moveTo(60,pr.pullbar); ctx.lineTo(190,pr.pullbar); ctx.stroke(); }
+  const seg=(pts,c,w)=>{ ctx.strokeStyle=c; ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(const q of pts.slice(1)) ctx.lineTo(q[0],q[1]); ctx.stroke(); };
+  // far limbs
+  seg([P.hip,P.knee2,P.ank2,toe(P.ank2)],COL.muted,8);
+  seg([P.sh,P.elb2,P.hand2],COL.muted,7);
+  // torso + near leg
+  seg([P.hip,P.sh],COL.ink,11);
+  seg([P.hip,P.knee,P.ank,toe(P.ank)],COL.ink,9);
+  ctx.fillStyle=COL.ink; ctx.beginPath(); ctx.arc(P.head[0],P.head[1],10,0,7); ctx.fill();
+  seg([P.sh,P.elb,P.hand],COL.ink,8);
+  // load
+  const plate=(p,r)=>{ ctx.fillStyle=COL.accent; ctx.beginPath(); ctx.arc(p[0],p[1],r,0,7); ctx.fill(); ctx.fillStyle=COL.bg; ctx.beginPath(); ctx.arc(p[0],p[1],r*.28,0,7); ctx.fill(); };
+  if(pr.plate) plate(P.hand,15);
+  if(pr.db){ plate(P.hand,8); }
+}
+const canvases=new Set();
+function regCanvas(cv,ex,big){ cv._ex=ex; cv._big=big; canvases.add(cv); }
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function loop(ts){
+  for(const cv of canvases){
+    if(!cv.isConnected){ canvases.delete(cv); continue; }
+    const r=cv.getBoundingClientRect(); if(!r.width) continue;
+    const dpr=window.devicePixelRatio||1, W=Math.round(r.width*dpr), H=Math.round(r.height*dpr);
+    if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
+    const ex=cv._ex, per=ex.hold?3600:2600;
+    let ph=(ts%per)/per, t=reduce?(cv._big?.5:1):(1-Math.cos(ph*2*Math.PI))/2;
+    if(ex.hold) t=reduce?0:t;
+    drawFig(cv.getContext('2d'),ex,t,W,H);
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- exercise library ---------- */
+const EX=[
+ {id:'squat',name:'Приседания со штангой',group:'legs',kind:'comp',equip:'barbell',place:['gym'],muscles:'Квадрицепсы, ягодицы, кор',props:{plate:1},
+  A:{hip:[108,99],lean:6,ank:[112,183],wrR:[-6,-4]},B:{hip:[86,140],lean:38,ank:[112,183],wrR:[-6,-4]},
+  cues:['Штанга на трапециях, хват чуть шире плеч, лопатки сведены.','Стопы на ширине плеч, носки слегка развёрнуты наружу.','Вдох, напряги пресс и опускайся, отводя таз назад и вниз.','Колени идут по линии носков, пятки не отрываются.','Опустись до параллели бедра с полом и встань, толкая пол стопами.']},
+ {id:'bench',name:'Жим штанги лёжа',group:'push',kind:'comp',equip:'barbell',place:['gym'],muscles:'Грудь, трицепсы, передние дельты',props:{plate:1,bench:[62,168,150]},
+  A:{hip:[92,143],lean:90,ank:[56,183],wrR:[2,-56],ls:1},B:{hip:[92,143],lean:90,ank:[56,183],wrR:[6,-10],ls:1},
+  cues:['Ляг так, чтобы глаза были под грифом. Стопы плотно на полу.','Сведи лопатки и сохрани небольшой прогиб в пояснице.','Сними штангу на прямые руки над плечами.','Опусти гриф к низу груди, локти под углом ~45° к корпусу.','Выжми вверх, не отрывая таз от скамьи.']},
+ {id:'deadlift',name:'Становая тяга',group:'hinge',kind:'comp',equip:'barbell',place:['gym'],muscles:'Спина, ягодицы, бицепс бедра',props:{plate:1},
+  A:{hip:[88,135],lean:58,ank:[112,183],wr:[122,166]},B:{hip:[108,98],lean:0,ank:[112,183],wr:[112,104]},
+  cues:['Гриф над серединой стопы, стопы на ширине таза.','Наклонись с прямой спиной и возьми гриф хватом чуть шире ног.','Опусти таз, грудь вперёд, плечи над грифом.','Тяни штангу вдоль ног, разгибая колени и таз одновременно.','Наверху выпрямись полностью, не отклоняясь назад.']},
+ {id:'rdl',name:'Румынская тяга',group:'hinge',kind:'comp',equip:'barbell',place:['gym'],muscles:'Бицепс бедра, ягодицы, поясница',props:{plate:1},
+  A:{hip:[108,98],lean:0,ank:[112,183],wr:[112,104]},B:{hip:[94,106],lean:72,ank:[112,183],wr:[140,150]},
+  cues:['Стань прямо со штангой в руках, колени слегка согнуты.','Отводи таз назад, наклоняя корпус с прямой спиной.','Гриф скользит вдоль бёдер.','Опускайся до ощущения растяжения задней поверхности бедра.','Вернись в исходное, толкая таз вперёд.']},
+ {id:'row',name:'Тяга штанги в наклоне',group:'pull',kind:'comp',equip:'barbell',place:['gym'],muscles:'Широчайшие, ромбовидные, бицепс',props:{plate:1},
+  A:{hip:[95,104],lean:70,ank:[112,183],wr:[140,140]},B:{hip:[95,104],lean:70,ank:[112,183],wr:[128,113]},
+  cues:['Наклонись до угла ~45°, спина прямая, колени согнуты.','Руки прямые, гриф под плечами.','Тяни штангу к низу живота, сводя лопатки.','Локти идут вдоль корпуса назад.','Медленно опусти, не округляя спину.']},
+ {id:'ohp',name:'Жим штанги стоя',group:'push',kind:'comp',equip:'barbell',place:['gym'],muscles:'Дельты, трицепсы, кор',props:{plate:1},
+  A:{hip:[110,98],lean:0,ank:[110,183],wrR:[8,-4]},B:{hip:[110,98],lean:0,ank:[110,183],wrR:[3,-56]},
+  cues:['Штанга на груди, хват чуть шире плеч, локти чуть впереди грифа.','Напряги ягодицы и пресс, не прогибайся в пояснице.','Выжми гриф вертикально вверх, убирая голову назад.','Наверху голова уходит «в окно» между руками.','Опусти штангу на грудь под контролем.']},
+ {id:'pullup',name:'Подтягивания',group:'pull',kind:'comp',equip:'bar',place:['gym','home'],muscles:'Широчайшие, бицепс, предплечья',props:{pullbar:14,noFloor:1},
+  A:{hip:[119,122],lean:0,ank:[94,190],wr:[121,16]},B:{hip:[116,72],lean:0,ank:[92,140],wr:[124,16]},
+  cues:['Возьмись за перекладину хватом чуть шире плеч.','Повисни на прямых руках, опусти плечи вниз.','Тянись грудью к перекладине, сводя лопатки.','Подбородок выше перекладины, без рывков ногами.','Опустись медленно до прямых рук.']},
+ {id:'lunge_db',name:'Выпады с гантелями',group:'legs',kind:'comp',equip:'dumbbell',place:['gym','home'],muscles:'Квадрицепсы, ягодицы',props:{db:1},
+  A:{hip:[101,108],lean:0,ank:[138,183],ank2:[64,181],wrR:[2,56]},B:{hip:[100,146],lean:2,ank:[138,183],ank2:[64,181],wrR:[2,56]},
+  cues:['Гантели в опущенных руках, корпус ровно.','Сделай широкий шаг, ноги на ширине таза.','Опускайся вертикально вниз, пока заднее колено почти не коснётся пола.','Переднее колено над стопой, не уходит внутрь.','Поднимись, толкаясь передней пяткой.']},
+ {id:'curl',name:'Подъём гантелей на бицепс',group:'pull',kind:'iso',equip:'dumbbell',place:['gym','home'],muscles:'Бицепс, предплечья',props:{db:1},
+  A:{hip:[110,98],lean:0,ank:[110,183],wrR:[3,57]},B:{hip:[110,98],lean:0,ank:[110,183],wrR:[14,6]},
+  cues:['Стань прямо, локти прижаты к корпусу.','Сгибай руки, поднимая гантели к плечам.','Локти остаются на месте, корпус не раскачивается.','Наверху сожми бицепс на секунду.','Опускай медленно до полного выпрямления.']},
+ {id:'pushup',name:'Отжимания',group:'push',kind:'comp',equip:'none',place:['gym','home'],muscles:'Грудь, трицепсы, кор',props:{},
+  A:{hip:[104.5,148.8],sh:[150,128],ank:[30,183],wr:[150,181]},B:{hip:[112.8,168.6],sh:[162,160],ank:[30,183],wr:[150,181]},
+  cues:['Упор лёжа, ладони чуть шире плеч, тело одной линией.','Напряги пресс и ягодицы, таз не провисает.','Опускайся, сгибая локти под ~45° к корпусу.','Грудь почти касается пола.','Выжми себя вверх до прямых рук.']},
+ {id:'bwsquat',name:'Приседания',group:'legs',kind:'comp',equip:'none',place:['gym','home'],muscles:'Квадрицепсы, ягодицы',props:{},
+  A:{hip:[108,99],lean:4,ank:[112,183],wrR:[50,12]},B:{hip:[86,140],lean:36,ank:[112,183],wrR:[54,-6]},
+  cues:['Стопы на ширине плеч, руки вытяни вперёд для баланса.','Отводи таз назад и вниз, спина прямая.','Колени по линии носков.','Опустись до параллели или ниже, если позволяет подвижность.','Встань, толкая пол всей стопой.']},
+ {id:'lunge',name:'Выпады',group:'legs',kind:'comp',equip:'none',place:['gym','home'],muscles:'Квадрицепсы, ягодицы',props:{},
+  A:{hip:[101,108],lean:0,ank:[138,183],ank2:[64,181],wrR:[6,50]},B:{hip:[100,146],lean:2,ank:[138,183],ank2:[64,181],wrR:[6,50]},
+  cues:['Руки на поясе или вдоль корпуса.','Широкий шаг вперёд, корпус вертикально.','Опускайся, пока оба колена не согнутся под 90°.','Не касайся коленом пола.','Вернись в исходное и смени ногу.']},
+ {id:'bridge',name:'Ягодичный мост',group:'hinge',kind:'iso',equip:'none',place:['gym','home'],muscles:'Ягодицы, бицепс бедра',props:{},
+  A:{hip:[115,176],sh:[65,177],ank:[152,183],wr:[118,183]},B:{hip:[110,146],sh:[66,175],ank:[152,183],wr:[118,183]},
+  cues:['Ляг на спину, колени согнуты, стопы на полу у таза.','Руки вдоль тела ладонями вниз.','Толкаясь пятками, подними таз вверх.','Наверху сожми ягодицы, тело от плеч до колен в линию.','Медленно опусти таз, не касаясь пола полностью.']},
+ {id:'dips',name:'Обратные отжимания',group:'push',kind:'iso',equip:'chair',place:['gym','home'],muscles:'Трицепсы, грудь',props:{bench:[38,84,132]},
+  A:{hip:[94,122],lean:-2,ank:[150,183],wr:[80,131]},B:{hip:[94,156],lean:-2,ank:[150,183],wr:[80,131]},
+  cues:['Сядь на край стула или скамьи, ладони рядом с тазом.','Сдвинь таз вперёд, ноги вытяни или согни.','Опускайся, сгибая локти назад до 90°.','Плечи не поднимаются к ушам.','Выжми себя вверх за счёт трицепсов.']},
+ {id:'superman',name:'Супермен',group:'pull',kind:'iso',equip:'none',place:['gym','home'],muscles:'Разгибатели спины, ягодицы',props:{},
+  A:{hip:[108,177],sh:[158,177],ank:[24,180],wr:[208,180],es:-1},B:{hip:[108,175],sh:[156,164],ank:[26,165],wr:[200,150],es:-1},
+  cues:['Ляг на живот, руки вытяни вперёд.','Взгляд в пол, шея продолжает линию спины.','Одновременно подними руки, грудь и ноги.','Задержись на 1–2 секунды, сводя лопатки.','Плавно опустись.']},
+ {id:'plank',name:'Планка',group:'core',kind:'hold',equip:'none',place:['gym','home'],muscles:'Пресс, кор, плечи',props:{},hold:1,
+  A:{hip:[101.4,162.6],sh:[150,151],ank:[16,183],wr:[178,182]},B:{hip:[101.4,159.5],sh:[150,151],ank:[16,183],wr:[178,182]},
+  cues:['Упор на предплечья, локти под плечами.','Тело — прямая линия от пяток до макушки.','Напряги пресс и ягодицы, таз не провисает и не задирается.','Дыши ровно, не задерживай дыхание.','Держи заданное время.']},
+ {id:'crunch',name:'Скручивания',group:'core',kind:'iso',equip:'none',place:['gym','home'],muscles:'Прямая мышца живота',props:{},
+  A:{hip:[112,177],sh:[62,177],ank:[152,183],wrR:[-12,-14]},B:{hip:[112,177],sh:[74,150],ank:[152,183],wrR:[-8,-18]},
+  cues:['Ляг на спину, колени согнуты, стопы на полу.','Пальцы у висков, локти разведены.','На выдохе оторви лопатки от пола, скручивая корпус.','Поясница остаётся прижатой.','Медленно вернись вниз.']},
+ {id:'calf',name:'Подъёмы на носки',group:'legs',kind:'iso',equip:'none',place:['gym','home'],muscles:'Икроножные',props:{},
+  A:{hip:[110,98],lean:0,ank:[110,182],wrR:[3,56]},B:{hip:[110,88],lean:0,ank:[110,172],wrR:[3,56]},
+  cues:['Стань прямо, можно держаться за опору.','Поднимись на носки как можно выше.','Задержись наверху на секунду.','Медленно опусти пятки.','Не сгибай колени.']}
+];
+const EXM=Object.fromEntries(EX.map(e=>[e.id,e]));
+
+/* ---------- program logic ---------- */
+const DAYS=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const SESS={full_a:{t:'Фулбади A',c:'--accent'},full_b:{t:'Фулбади B',c:'--green'},upper:{t:'Верх тела',c:'--accent'},lower:{t:'Низ тела',c:'--yellow'},push:{t:'Жим (Push)',c:'--red'},pull:{t:'Тяга (Pull)',c:'--accent'},legs:{t:'Ноги (Legs)',c:'--yellow'}};
+const GOALS={strength:'Сила',mass:'Масса',tone:'Рельеф'};
+const LEVELS={beginner:'Новичок',middle:'Средний',pro:'Опытный'};
+function available(e){
+  if(S.place==='gym') return true;
+  if(!e.place.includes('home')) return false;
+  return e.equip==='none'||(e.equip==='dumbbell'&&S.equip.dumbbell)||(e.equip==='bar'&&S.equip.bar)||(e.equip==='chair'&&S.equip.chair);
+}
+function pool(g){
+  const p=EX.filter(e=>e.group===g&&available(e));
+  if(S.place==='gym') p.sort((a,b)=>(a.equip==='none')-(b.equip==='none'));
+  return p;
+}
+function sessionFor(dayIdx){
+  const ds=[...S.days].sort((a,b)=>a-b), pos=ds.indexOf(dayIdx);
+  if(pos<0) return null;
+  if(S.type==='full') return pos%2?'full_b':'full_a';
+  if(ds.length===3) return ['push','pull','legs'][pos];
+  return pos%2?'lower':'upper';
+}
+function exercisesFor(key){
+  const P={legs:pool('legs'),hinge:pool('hinge'),push:pool('push'),pull:pool('pull'),core:pool('core')};
+  const plan={full_a:[['legs',0],['push',0],['pull',0],['hinge',0],['core',0]],
+    full_b:[['legs',1],['push',1],['pull',1],['hinge',1],['core',1]],
+    upper:[['push',0],['pull',0],['push',1],['pull',1],['core',0]],
+    lower:[['legs',0],['hinge',0],['legs',1],['legs',2],['core',1]],
+    push:[['push',0],['push',1],['push',2],['push',3],['core',0]],
+    pull:[['pull',0],['pull',1],['pull',2],['hinge',1],['core',1]],
+    legs:[['legs',0],['hinge',0],['legs',1],['legs',2],['core',0]]}[key];
+  const out=[];
+  for(const [g,i] of plan){
+    const arr=P[g]; if(!arr.length) continue;
+    let k=i%arr.length, tries=0;
+    while(out.includes(arr[k])&&tries<arr.length){ k=(k+1)%arr.length; tries++; }
+    if(!out.includes(arr[k])) out.push(arr[k]);
+  }
+  return out;
+}
+function dose(e){
+  const g=S.profile.goal, lv=S.profile.level;
+  if(e.kind==='hold') return {s:3,r:g==='tone'?'45–60 с':'30–45 с',rest:60};
+  let s,r,rest;
+  if(g==='strength'){ s=e.kind==='comp'&&e.equip!=='none'?5:3; r=e.kind==='comp'&&e.equip!=='none'?'5':'8–10'; rest=e.kind==='comp'?150:90; }
+  else if(g==='mass'){ s=4; r='8–12'; rest=90; }
+  else { s=3; r='12–15'; rest=60; }
+  if(e.equip==='none'&&e.kind==='comp'&&g!=='tone') r='10–15';
+  if(e.id==='calf') r='15–20';
+  if(e.id==='pullup'&&lv==='beginner') r='макс.';
+  if(lv==='beginner') s=Math.max(2,s-1);
+  if(lv==='pro') s+=e.kind==='comp'?1:0;
+  return {s,r,rest};
+}
+const isoDate=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const dow=d=>(d.getDay()+6)%7;
+
+/* ---------- nutrition ---------- */
+function nutrition(){
+  const p=S.profile, n=S.days.length;
+  const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='m'?5:-161);
+  const act=n<=1?1.3:n<=3?1.45:n<=5?1.6:1.75;
+  const adj={strength:1.05,mass:1.12,tone:.85}[p.goal];
+  const kcal=Math.round(bmr*act*adj/10)*10;
+  const prot=Math.round(p.weight*{strength:1.8,mass:2,tone:2.2}[p.goal]);
+  const fat=Math.round(p.weight*(p.goal==='tone'?.8:.9));
+  const carb=Math.max(50,Math.round((kcal-prot*4-fat*9)/4));
+  const water=(p.weight*35/1000+.5).toFixed(1);
+  const trainK=Math.round(kcal*(1+.07*(7-n)/7)/10)*10, restK=Math.round((kcal*7-trainK*n)/Math.max(1,7-n)/10)*10;
+  return {bmr:Math.round(bmr),kcal,prot,fat,carb,water,trainK,restK,act};
+}
+// foods: per 100 g [protein, fat, carbs]
+const F={oats:['Овсянка (сухая)',12,6,60],eggs:['Яйца',13,11,1],cottage:['Творог 5%',17,5,3],chicken:['Куриная грудка',23,2,0],rice:['Рис (сухой)',7,1,78],buck:['Гречка (сухая)',13,3,62],fish:['Рыба (минтай/треска)',17,1,0],beef:['Говядина',20,10,0],pasta:['Макароны (сухие)',11,1.5,71],potato:['Картофель',2,0,17],veg:['Овощи',1.5,0,6],fruit:['Банан',1.5,0,21],nuts:['Орехи',15,55,13],oil:['Оливковое масло',0,100,0],bread:['Хлеб цельнозерновой',9,2,42],kefir:['Кефир 2,5%',3,2.5,4]};
+function menu(train){
+  const N=nutrition(), k=train?N.trainK/N.kcal:N.restK/N.kcal;
+  const P=N.prot, Fa=N.fat, C=N.carb*k;
+  const meals=[
+    {n:'Завтрак',w:.25,p:'eggs',c:'oats',x:[['fruit',120]]},
+    {n:'Обед',w:.32,p:train?'chicken':'beef',c:'buck',x:[['veg',200]]},
+    {n:train?'Перед тренировкой':'Перекус',w:.15,p:'cottage',c:'bread',x:[]},
+    {n:train?'После тренировки / ужин':'Ужин',w:.28,p:'fish',c:train?'rice':'potato',x:[['veg',200]]}
+  ];
+  const r5=v=>Math.max(5,Math.round(v/5)*5);
+  let tot=[0,0,0];
+  const out=meals.map(m=>{
+    const items=[];
+    const pf=F[m.p], cf=F[m.c];
+    const cg=r5(C*m.w/cf[3]*100); const pAfterC=cf[1]*cg/100*.5;
+    const pg=r5(Math.max(60,(P*m.w-pAfterC)/pf[1]*100));
+    items.push([m.p,pg],[m.c,cg],...m.x);
+    return {n:m.n,items};
+  });
+  // top up fat with oil / nuts
+  out.forEach(m=>m.items.forEach(([f,g])=>{ const d=F[f]; tot[0]+=d[1]*g/100; tot[1]+=d[2]*g/100; tot[2]+=d[3]*g/100; }));
+  const fatLeft=Fa-tot[1];
+  if(fatLeft>8){ const ng=r5(Math.min(40,fatLeft*.5/F.nuts[2]*100)); out[2].items.push(['nuts',ng]); const og=r5(Math.max(0,(fatLeft-F.nuts[2]*ng/100))/F.oil[2]*100); if(og>=5){ out[1].items.push(['oil',Math.round(og/2)]); out[3].items.push(['oil',Math.round(og/2)]); } }
+  tot=[0,0,0];
+  out.forEach(m=>{ m.k=0; m.items.forEach(([f,g])=>{ const d=F[f]; const p=d[1]*g/100,fa=d[2]*g/100,c=d[3]*g/100; tot[0]+=p; tot[1]+=fa; tot[2]+=c; m.k+=p*4+fa*9+c*4; }); m.k=Math.round(m.k); });
+  return {meals:out,tot:tot.map(Math.round),kcal:Math.round(tot[0]*4+tot[1]*9+tot[2]*4)};
+}
+
+/* ---------- UI ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ICON={today:'<path d="M4 12h3v5H4zM17 7h3v10h-3zM7 14h10M2 14h2M20 12h2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
+ plan:'<rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ lib:'<circle cx="12" cy="5" r="2.5" fill="currentColor"/><path d="M12 8v7M12 15l-4 6M12 15l4 6M6 11h12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
+ food:'<path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10M16 3c-2 2-2 7 0 9v9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
+ me:'<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'};
+const TABS=[['today','Сегодня'],['plan','План'],['lib','Упражнения'],['food','Питание'],['me','Профиль']];
+function renderTabs(){
+  $('#tabs').innerHTML=TABS.map(([k,t])=>`<button data-tab="${k}" class="${S.tab===k?'on':''}" aria-label="${t}"><svg viewBox="0 0 24 24">${ICON[k]}</svg>${t}</button>`).join('');
+}
+$('#tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S.tab=b.dataset.tab; save(); haptic(); render(); scrollTo(0,0); });
+
+function exRow(e,checkKey){
+  const d=dose(e), on=checkKey&&S.checks[checkKey];
+  return `<div class="row" style="flex-wrap:nowrap;align-items:center">
+    <button class="ex ${on?'done':''}" data-ex="${e.id}"><canvas data-cv="${e.id}"></canvas><span style="min-width:0"><div class="n">${esc(e.name)}</div><div class="m">${esc(e.muscles)}</div></span><span class="sr">${d.s}×${d.r}</span></button>
+    ${checkKey?`<button class="chk ${on?'on':''}" data-chk="${checkKey}" aria-label="Отметить выполненным"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 4" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></button>`:''}
+  </div>`;
+}
+function vToday(){
+  const now=new Date(), di=dow(now), key=sessionFor(di), date=isoDate(now);
+  let h='';
+  if(!key){
+    const ds=[...S.days].sort((a,b)=>a-b), next=ds.find(x=>x>di)??ds[0];
+    h+=`<div class="card hero"><div class="plates"><i style="height:90px"></i><i style="height:120px"></i><i style="height:90px"></i></div><div class="k">${DAYS[di]} · день отдыха</div><div class="t">Восстановление</div><div class="s">Следующая тренировка: ${next!=null?DAYS[next]+', '+S.time+' — '+SESS[sessionFor(next)].t:'не запланирована'}</div></div>
+    <h3>Что делать сегодня</h3><div class="card stack"><div>Прогулка 30–40 минут, 8–10 тыс. шагов.</div><div>Сон 7–9 часов — в это время растут мышцы.</div><div>Калории дня отдыха: <b class="num">${nutrition().restK} ккал</b>, белок не снижай.</div></div>`;
+  } else {
+    const list=exercisesFor(key), done=list.filter(e=>S.checks[date+':'+e.id]).length;
+    const mins=list.reduce((a,e)=>{const d=dose(e);return a+d.s*(1+d.rest/60);},0);
+    h+=`<div class="card hero"><div class="plates"><i style="height:90px"></i><i style="height:120px"></i><i style="height:90px"></i></div><div class="k">${DAYS[di]} · ${S.time} · ${S.place==='gym'?'в зале':'дома'}</div><div class="t">${SESS[key].t}</div><div class="s num">${list.length} упражнений · ~${Math.round(mins/5)*5+10} мин · выполнено ${done}/${list.length}</div></div>
+    <h3>Разминка</h3><div class="card note">5–7 минут кардио, вращения в суставах, затем 1–2 лёгких подхода первого упражнения.</div>
+    <h3>Упражнения</h3><div class="stack">${list.map(e=>exRow(e,date+':'+e.id)).join('')}</div>
+    <div style="margin-top:14px"><button class="btn" id="finish">${S.history.includes(date)?'Тренировка завершена ✓':'Завершить тренировку'}</button></div>`;
+  }
+  const wk=S.history.filter(d=>{const x=new Date(d);return (now-x)/864e5<7;}).length;
+  h+=`<h3>Прогресс</h3><div class="stats"><div class="stat"><div class="v">${S.history.length}</div><div class="l">всего тренировок</div></div><div class="stat"><div class="v">${wk}/${S.days.length}</div><div class="l">за 7 дней</div></div><div class="stat"><div class="v">${GOALS[S.profile.goal]}</div><div class="l">цель</div></div></div>`;
+  return h;
+}
+function vPlan(){
+  const di=dow(new Date());
+  return `<h2>Формат</h2>
+  <div class="seg" data-set="place"><button data-v="gym" class="${S.place==='gym'?'on':''}">В зале</button><button data-v="home" class="${S.place==='home'?'on':''}">Дома</button></div>
+  ${S.place==='home'?`<h3>Что есть дома</h3><div class="filters" data-eq>${[['dumbbell','Гантели'],['bar','Турник'],['chair','Стул / скамья']].map(([k,t])=>`<button data-k="${k}" class="${S.equip[k]?'on':''}">${t}</button>`).join('')}</div>`:''}
+  <h2>Вид тренировок</h2>
+  <div class="seg" data-set="type"><button data-v="full" class="${S.type==='full'?'on':''}">Фулбади</button><button data-v="split" class="${S.type==='split'?'on':''}">Сплит</button></div>
+  <p class="note">${S.type==='full'?'Всё тело за тренировку, два чередующихся комплекса A и B. Лучший выбор для 2–3 тренировок в неделю и для новичков.':S.days.length===3?'3 дня: Push / Pull / Legs — жимы, тяги и ноги в отдельные дни.':'Верх / Низ: чередование тренировок верха и низа тела. Подходит для 2 и 4+ дней.'}</p>
+  <h2>Расписание</h2>
+  <div class="days" id="days">${DAYS.map((d,i)=>`<button data-d="${i}" class="${S.days.includes(i)?'on':''}">${d}</button>`).join('')}</div>
+  <div class="row" style="margin-top:10px"><div class="field"><label for="time">Время тренировки</label><input type="time" id="time" value="${S.time}"></div></div>
+  <h3>Неделя</h3>
+  <div class="week">${DAYS.map((d,i)=>{const k=sessionFor(i);return `<div class="wd ${i===di?'today':''}"><span class="d">${d}</span><span class="tag" style="--c:var(${k?SESS[k].c:'--line'})">${k?SESS[k].t:'<span class="muted">Отдых</span>'}</span><span class="muted num">${k?S.time:''}</span></div>`;}).join('')}</div>`;
+}
+let libFilter='all';
+function vLib(){
+  const G=[['all','Все'],['legs','Ноги'],['hinge','Ягодицы и задняя цепь'],['push','Жимы'],['pull','Спина и тяги'],['core','Пресс']];
+  const list=EX.filter(e=>(libFilter==='all'||e.group===libFilter));
+  return `<h2>Упражнения</h2><div class="filters" id="lf">${G.map(([k,t])=>`<button data-g="${k}" class="${libFilter===k?'on':''}">${t}</button>`).join('')}</div>
+  <div class="stack" style="margin-top:10px">${list.map(e=>exRow(e)).join('')}</div>
+  <p class="note">Нажми на упражнение, чтобы увидеть анимацию техники и пошаговые подсказки.</p>`;
+}
+function vFood(){
+  const N=nutrition(), tr=foodDay, M=menu(tr);
+  const sum=N.prot*4+N.fat*9+N.carb*4;
+  return `<h2>Питание</h2>
+  <div class="card hero"><div class="k">Цель: ${GOALS[S.profile.goal].toLowerCase()} · ${S.days.length} трен./нед.</div><div class="t num">${N.kcal} ккал в день</div><div class="s num">Тренировочный день ${N.trainK} · день отдыха ${N.restK}</div></div>
+  <div class="stats" style="margin-top:10px">
+    <div class="stat"><div class="v">${N.prot} г</div><div class="l">белки</div></div>
+    <div class="stat"><div class="v">${N.fat} г</div><div class="l">жиры</div></div>
+    <div class="stat"><div class="v">${N.carb} г</div><div class="l">углеводы</div></div></div>
+  <div class="bar" style="margin-top:10px" aria-hidden="true"><i style="width:${N.prot*400/sum}%;background:var(--red)"></i><i style="width:${N.fat*900/sum}%;background:var(--yellow)"></i><i style="width:${N.carb*400/sum}%;background:var(--accent)"></i></div>
+  <p class="note">Базовый обмен ${N.bmr} ккал (формула Миффлина — Сан-Жеора) × коэффициент активности ${N.act} по числу тренировок${S.profile.goal==='mass'?' + 12% профицит для набора':S.profile.goal==='tone'?' − 15% дефицит для сушки':' + 5% для силовой работы'}. Вода: ~${N.water} л в день.</p>
+  <h3>Меню на день</h3>
+  <div class="seg" id="fd"><button data-v="1" class="${tr?'on':''}">День тренировки</button><button data-v="0" class="${!tr?'on':''}">День отдыха</button></div>
+  <div class="stack" style="margin-top:10px">${M.meals.map(m=>`<div class="card meal"><div class="h"><span>${m.n}</span><span class="muted num">${m.k} ккал</span></div><ul>${m.items.map(([f,g])=>`<li>${F[f][0]} — <span class="num">${g} ${f==='eggs'?'г (~'+Math.round(g/55)+' шт.)':'г'}</span></li>`).join('')}</ul></div>`).join('')}</div>
+  <p class="note num">Итого по меню: ${M.kcal} ккал · Б ${M.tot[0]} / Ж ${M.tot[1]} / У ${M.tot[2]} г. Продукты можно менять на аналоги: курицу на индейку, гречку на булгур, рыбу на тунец.</p>
+  <h3>Правила</h3><div class="card stack note" style="color:var(--ink)">
+    <div>Белок распределяй равномерно: 25–40 г в каждый приём пищи.</div>
+    <div>За 1,5–2 часа до тренировки — углеводы и белок, после — то же в течение 2 часов.</div>
+    <div>Взвешивайся раз в неделю утром натощак. ${S.profile.goal==='mass'?'Цель: +0,25–0,5 кг в неделю.':S.profile.goal==='tone'?'Цель: −0,5–0,8% веса в неделю.':'Вес держится стабильным или растёт медленно.'}</div>
+    <div>Если вес 2 недели стоит на месте — поменяй калорийность на 150–200 ккал.</div></div>
+  <p class="note">Расчёт ориентировочный и не заменяет консультацию врача или диетолога.</p>`;
+}
+let foodDay=true;
+function vMe(){
+  const p=S.profile, bmi=p.weight/((p.height/100)**2);
+  const bmiT=bmi<18.5?'ниже нормы':bmi<25?'норма':bmi<30?'выше нормы':'ожирение';
+  const f=(id,l,v,ty,ex='')=>`<div class="field"><label for="${id}">${l}</label><input id="${id}" data-p="${id}" type="${ty}" inputmode="numeric" value="${v}" ${ex}></div>`;
+  const sel=(id,l,o)=>`<div class="field"><label for="${id}">${l}</label><select id="${id}" data-p="${id}">${Object.entries(o).map(([k,t])=>`<option value="${k}" ${p[id]===k?'selected':''}>${t}</option>`).join('')}</select></div>`;
+  return `<h2>Параметры</h2>
+  <div class="card stack">
+    <div class="row">${sel('sex','Пол',{m:'Мужской',f:'Женский'})}${f('age','Возраст, лет',p.age,'number','min="12" max="90"')}</div>
+    <div class="row">${f('height','Рост, см',p.height,'number','min="120" max="230"')}${f('weight','Вес, кг',p.weight,'number','min="30" max="250" step="0.5"')}</div>
+    <div class="row">${sel('goal','Цель',GOALS)}${sel('level','Уровень',LEVELS)}</div>
+  </div>
+  <div class="stats" style="margin-top:10px">
+    <div class="stat"><div class="v">${bmi.toFixed(1)}</div><div class="l">ИМТ · ${bmiT}</div></div>
+    <div class="stat"><div class="v">${nutrition().kcal}</div><div class="l">ккал / день</div></div>
+    <div class="stat"><div class="v">${nutrition().prot} г</div><div class="l">белка / день</div></div></div>
+  <p class="note">Подходы и повторения во всех тренировках подстраиваются под цель и уровень: сила — 5×5 в базовых упражнениях, масса — 4×8–12, рельеф — 3×12–15. Новичкам на один подход меньше.</p>
+  <h3>Данные</h3><button class="btn ghost" id="reset">Сбросить отметки и историю</button><div id="resetConfirm"></div>`;
+}
+function render(){
+  readCols(); renderTabs();
+  const now=new Date();
+  $('#today').textContent=now.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});
+  $('#view').innerHTML=({today:vToday,plan:vPlan,lib:vLib,food:vFood,me:vMe})[S.tab]();
+  document.querySelectorAll('#view canvas[data-cv]').forEach(c=>regCanvas(c,EXM[c.dataset.cv]));
+}
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const ex=t.closest('[data-ex]'); if(ex){ openEx(ex.dataset.ex); return; }
+  const ck=t.closest('[data-chk]'); if(ck){ const k=ck.dataset.chk; S.checks[k]=!S.checks[k]; save(); haptic('medium'); render(); return; }
+  const sg=t.closest('[data-set] button'); if(sg){ S[sg.parentNode.dataset.set]=sg.dataset.v; save(); haptic(); render(); return; }
+  const eq=t.closest('[data-eq] button'); if(eq){ S.equip[eq.dataset.k]=!S.equip[eq.dataset.k]; save(); render(); return; }
+  const d=t.closest('#days button'); if(d){ const i=+d.dataset.d; S.days=S.days.includes(i)?S.days.filter(x=>x!==i):[...S.days,i]; save(); haptic(); render(); return; }
+  const lf=t.closest('#lf button'); if(lf){ libFilter=lf.dataset.g; render(); return; }
+  const fd=t.closest('#fd button'); if(fd){ foodDay=fd.dataset.v==='1'; render(); return; }
+  if(t.id==='finish'){ const ds=isoDate(new Date()); if(!S.history.includes(ds)) S.history.push(ds); save(); try{tg&&tg.HapticFeedback.notificationOccurred('success')}catch(_){}; render(); return; }
+  if(t.id==='reset'){ $('#resetConfirm').innerHTML='<div class="row" style="margin-top:8px"><button class="btn" id="resetYes" style="flex:1;background:var(--red)">Да, сбросить</button><button class="btn ghost" id="resetNo" style="flex:1">Отмена</button></div>'; return; }
+  if(t.id==='resetYes'){ S.checks={}; S.history=[]; save(); render(); return; }
+  if(t.id==='resetNo'){ $('#resetConfirm').innerHTML=''; return; }
+  if(t.id==='sheet'||t.closest('#closeSheet')) closeSheet();
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.p){ const v=t.tagName==='SELECT'?t.value:parseFloat(t.value); if(t.tagName==='SELECT'||!isNaN(v)){ S.profile[t.dataset.p]=v; save(); render(); } }
+  if(t.id==='time'){ S.time=t.value; save(); }
+});
+
+/* ---------- exercise sheet ---------- */
+let timerInt=null;
+function openEx(id){
+  const e=EXM[id], d=dose(e);
+  $('#sheetBody').innerHTML=`<div class="row" style="justify-content:space-between;align-items:center;flex-wrap:nowrap"><h2 style="margin:0">${esc(e.name)}</h2><button class="x" id="closeSheet" aria-label="Закрыть">×</button></div>
+  <div class="row" style="margin:8px 0 12px"><span class="pill">${esc(e.muscles)}</span><span class="pill">${{barbell:'Штанга',dumbbell:'Гантели',bar:'Турник',none:'Свой вес',chair:'Стул / скамья'}[e.equip]}</span></div>
+  <canvas id="bigcv"></canvas>
+  <div class="stats" style="margin-top:10px"><div class="stat"><div class="v">${d.s}</div><div class="l">подходов</div></div><div class="stat"><div class="v">${d.r}</div><div class="l">${e.kind==='hold'?'время':'повторений'}</div></div><div class="stat"><div class="v">${d.rest} с</div><div class="l">отдых</div></div></div>
+  <h3>Техника</h3><ol>${e.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ol>
+  <h3>Таймер отдыха</h3><div class="card stack"><div class="timer" id="tm">${fmt(d.rest)}</div><button class="btn" id="tmGo" data-s="${d.rest}">Старт</button></div>`;
+  $('#sheet').hidden=false; document.body.style.overflow='hidden';
+  regCanvas($('#bigcv'),e,true);
+  $('#tmGo').onclick=ev=>{
+    clearInterval(timerInt); let s=+ev.target.dataset.s; ev.target.textContent='Заново'; $('#tm').textContent=fmt(s);
+    timerInt=setInterval(()=>{ s--; const el=$('#tm'); if(!el){clearInterval(timerInt);return;} el.textContent=fmt(Math.max(0,s)); if(s<=0){ clearInterval(timerInt); el.textContent='Подход!'; try{tg&&tg.HapticFeedback.notificationOccurred('warning')}catch(_){}} },1000);
+  };
+  if(tg&&tg.BackButton){ try{ tg.BackButton.show(); tg.BackButton.onClick(closeSheet); }catch(_){} }
+}
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function closeSheet(){ clearInterval(timerInt); $('#sheet').hidden=true; $('#sheetBody').innerHTML=''; document.body.style.overflow=''; if(tg&&tg.BackButton){ try{ tg.BackButton.hide(); tg.BackButton.offClick(closeSheet);}catch(_){} } }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#sheet').hidden) closeSheet(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readCols);
+if(tg) try{ tg.onEvent('themeChanged',()=>{ document.documentElement.dataset.theme=tg.colorScheme; readCols(); }); }catch(_){}
+
+render(); requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
