@@ -80,6 +80,7 @@ input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 .meal .h{display:flex;justify-content:space-between;gap:8px;font-weight:600}
 .meal ul{margin:0;padding-left:18px;color:var(--ink)}
 .meal li{margin:2px 0}
+.filters-btn{align-self:flex-start;border:0;background:var(--soft);color:var(--accent);font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:999px;cursor:pointer;margin-top:2px}
 .btn{border:0;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:600;padding:14px;border-radius:12px;cursor:pointer;width:100%}
 .btn.ghost{background:var(--soft);color:var(--accent)}
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
@@ -338,30 +339,72 @@ function nutrition(){
   return {bmr:Math.round(bmr),kcal,prot,fat,carb,water,trainK,restK,act};
 }
 // foods: per 100 g [protein, fat, carbs]
-const F={oats:['Овсянка (сухая)',12,6,60],eggs:['Яйца',13,11,1],cottage:['Творог 5%',17,5,3],chicken:['Куриная грудка',23,2,0],rice:['Рис (сухой)',7,1,78],buck:['Гречка (сухая)',13,3,62],fish:['Рыба (минтай/треска)',17,1,0],beef:['Говядина',20,10,0],pasta:['Макароны (сухие)',11,1.5,71],potato:['Картофель',2,0,17],veg:['Овощи',1.5,0,6],fruit:['Банан',1.5,0,21],nuts:['Орехи',15,55,13],oil:['Оливковое масло',0,100,0],bread:['Хлеб цельнозерновой',9,2,42],kefir:['Кефир 2,5%',3,2.5,4]};
-function menu(train){
+const F={oats:['Овсяные хлопья',12,6,60],eggs:['Яйца',13,11,1],cottage:['Творог 5%',17,5,3],greek:['Греческий йогурт 2%',10,2,4],kefir:['Кефир 2,5%',3,2.5,4],cheese:['Сыр 17%',27,17,0],
+  chicken:['Куриная грудка',23,2,0],turkey:['Филе индейки',21,2,0],beef:['Говядина',20,10,0],fish:['Треска / минтай',17,1,0],salmon:['Лосось',20,13,0],tuna:['Тунец в собств. соку',23,1,0],shrimp:['Креветки',20,1,0],
+  rice:['Рис (сухой)',7,1,78],buck:['Гречка (сухая)',13,3,62],pasta:['Макароны тв. сортов (сухие)',11,1.5,71],bulgur:['Булгур (сухой)',12,1.5,63],potato:['Картофель',2,0,17],lentil:['Чечевица (сухая)',24,1.5,48],
+  bread:['Хлеб цельнозерновой',9,2,42],lavash:['Лаваш тонкий',8,1,56],granola:['Гранола без сахара',10,15,62],flour:['Рисовая мука',6,1,80],
+  veg:['Овощи / салат',1.5,0,6],broc:['Брокколи',3,0,7],tomato:['Томаты',1,0,4],fruit:['Банан',1.5,0,21],apple:['Яблоко',.4,0,10],berries:['Ягоды',1,0,9],honey:['Мёд',0,0,80],
+  nuts:['Грецкие орехи',15,65,7],oil:['Оливковое масло',0,100,0],pb:['Арахисовая паста',25,50,16],avocado:['Авокадо',2,15,9]};
+// 7 dishes per meal slot; the week rotates through them, "Другое блюдо" shifts one slot
+const DISH={
+ b:[{t:'Овсянка с бананом и омлет',p:'eggs',c:'oats',x:[['fruit',120]]},
+    {t:'Сырники с ягодами и мёдом',p:'cottage',c:'flour',x:[['berries',100],['honey',10]]},
+    {t:'Яичница, тосты и авокадо',p:'eggs',c:'bread',x:[['tomato',100],['avocado',50]]},
+    {t:'Греческий йогурт с гранолой',p:'greek',c:'granola',x:[['berries',100]]},
+    {t:'Гречка с творогом и яблоком',p:'cottage',c:'buck',x:[['apple',150]]},
+    {t:'Омлет с сыром в лаваше',p:'eggs',c:'lavash',x:[['cheese',30],['tomato',100]]},
+    {t:'Рисовая каша и творог с мёдом',p:'cottage',c:'rice',x:[['honey',15]]}],
+ l:[{t:'Курица с гречкой и салатом',p:'chicken',c:'buck',x:[['veg',200]]},
+    {t:'Паста болоньезе',p:'beef',c:'pasta',x:[['tomato',150]]},
+    {t:'Индейка с булгуром и брокколи',p:'turkey',c:'bulgur',x:[['broc',200]]},
+    {t:'Лосось с рисом и овощами',p:'salmon',c:'rice',x:[['veg',200]]},
+    {t:'Плов с говядиной',p:'beef',c:'rice',x:[['veg',150]]},
+    {t:'Чечевичный суп с курицей',p:'chicken',c:'lentil',x:[['tomato',150]]},
+    {t:'Курица терияки с рисом',p:'chicken',c:'rice',x:[['broc',150],['honey',10]]}],
+ s:[{t:'Творог с бананом и хлебцем',p:'cottage',c:'bread',x:[['fruit',100]]},
+    {t:'Смузи: кефир, творог, овсянка, банан',p:'cottage',c:'oats',x:[['kefir',250],['fruit',100]]},
+    {t:'Сэндвич с тунцом',p:'tuna',c:'bread',x:[['tomato',80]]},
+    {t:'Йогурт с гранолой',p:'greek',c:'granola',x:[]},
+    {t:'Ролл в лаваше с курицей',p:'chicken',c:'lavash',x:[['veg',100]]},
+    {t:'Яйца и тост с арахисовой пастой',p:'eggs',c:'bread',x:[['pb',15]]},
+    {t:'Сыр, хлеб и яблоко',p:'cheese',c:'bread',x:[['apple',150]]}],
+ d:[{t:'Треска с рисом и овощами',p:'fish',c:'rice',x:[['veg',200]]},
+    {t:'Куриные котлеты с картофелем',p:'chicken',c:'potato',x:[['veg',200]]},
+    {t:'Индейка с гречкой и брокколи',p:'turkey',c:'buck',x:[['broc',200]]},
+    {t:'Лосось с картофелем и салатом',p:'salmon',c:'potato',x:[['veg',200]]},
+    {t:'Креветки с булгуром',p:'shrimp',c:'bulgur',x:[['veg',200]]},
+    {t:'Тушёная говядина с овощами',p:'beef',c:'bread',x:[['broc',250]]},
+    {t:'Паста с тунцом и томатами',p:'tuna',c:'pasta',x:[['tomato',150]]}]};
+const SLOT_OFF={b:0,l:3,s:5,d:2};
+function dishFor(day,slot){ const sw=(S.swap||{})[day+':'+slot]||0; return DISH[slot][(day+SLOT_OFF[slot]+sw)%7]; }
+function menu(day){
+  const train=!!sessionFor(day);
   const N=nutrition(), k=train?N.trainK/N.kcal:N.restK/N.kcal;
   const P=N.prot, Fa=N.fat, C=N.carb*k;
   const meals=[
-    {n:'Завтрак',w:.25,p:'eggs',c:'oats',x:[['fruit',120]]},
-    {n:'Обед',w:.32,p:train?'chicken':'beef',c:'buck',x:[['veg',200]]},
-    {n:train?'Перед тренировкой':'Перекус',w:.15,p:'cottage',c:'bread',x:[]},
-    {n:train?'После тренировки / ужин':'Ужин',w:.28,p:'fish',c:train?'rice':'potato',x:[['veg',200]]}
-  ];
+    {slot:'b',n:'Завтрак',w:.25},
+    {slot:'l',n:'Обед',w:.32},
+    {slot:'s',n:train?'Перед тренировкой':'Перекус',w:.15},
+    {slot:'d',n:train?'Ужин после тренировки':'Ужин',w:.28}
+  ].map(m=>Object.assign(m,dishFor(day,m.slot)));
   const r5=v=>Math.max(5,Math.round(v/5)*5);
   let tot=[0,0,0];
   const out=meals.map(m=>{
-    const items=[];
     const pf=F[m.p], cf=F[m.c];
-    const cg=r5(C*m.w/cf[3]*100); const pAfterC=cf[1]*cg/100*.5;
-    const pg=r5(Math.max(60,(P*m.w-pAfterC)/pf[1]*100));
-    items.push([m.p,pg],[m.c,cg],...m.x);
-    return {n:m.n,items};
+    const xc=m.x.reduce((a,[f,g])=>a+F[f][3]*g/100,0), xp=m.x.reduce((a,[f,g])=>a+F[f][1]*g/100,0);
+    const cg=r5(Math.max(cf[3]>30?20:100,(C*m.w-xc)/cf[3]*100)); const pAfterC=cf[1]*cg/100*.5;
+    const pg=r5(Math.max(m.p==='cheese'?40:60,(P*m.w-pAfterC-xp)/pf[1]*100));
+    return {n:m.n,slot:m.slot,t:m.t,items:[[m.p,pg],[m.c,cg],...m.x]};
   });
   // top up fat with oil / nuts
   out.forEach(m=>m.items.forEach(([f,g])=>{ const d=F[f]; tot[0]+=d[1]*g/100; tot[1]+=d[2]*g/100; tot[2]+=d[3]*g/100; }));
   const fatLeft=Fa-tot[1];
   if(fatLeft>8){ const ng=r5(Math.min(40,fatLeft*.5/F.nuts[2]*100)); out[2].items.push(['nuts',ng]); const og=r5(Math.max(0,(fatLeft-F.nuts[2]*ng/100))/F.oil[2]*100); if(og>=5){ out[1].items.push(['oil',Math.round(og/2)]); out[3].items.push(['oil',Math.round(og/2)]); } }
+  // scale main portions so the day lands on the calorie target
+  const target=train?N.trainK:N.restK, kc=it=>it.reduce((a,[f,g])=>a+(F[f][1]*4+F[f][2]*9+F[f][3]*4)*g/100,0);
+  const all=out.reduce((a,m)=>a+kc(m.items),0), fixed=out.reduce((a,m)=>a+kc(m.items.slice(2).filter(([f])=>f!=='oil'&&f!=='nuts')),0);
+  const ratio=Math.max(.6,Math.min(1.4,(target-fixed)/(all-fixed)));
+  out.forEach(m=>m.items.forEach((it,i)=>{ if(i<2||it[0]==='oil'||it[0]==='nuts') it[1]=it[0]==='oil'?Math.max(5,Math.round(it[1]*ratio)):r5(it[1]*ratio); }));
   tot=[0,0,0];
   out.forEach(m=>{ m.k=0; m.items.forEach(([f,g])=>{ const d=F[f]; const p=d[1]*g/100,fa=d[2]*g/100,c=d[3]*g/100; tot[0]+=p; tot[1]+=fa; tot[2]+=c; m.k+=p*4+fa*9+c*4; }); m.k=Math.round(m.k); });
   return {meals:out,tot:tot.map(Math.round),kcal:Math.round(tot[0]*4+tot[1]*9+tot[2]*4)};
@@ -430,7 +473,8 @@ function vLib(){
   <p class="note">Нажми на упражнение, чтобы увидеть анимацию техники и пошаговые подсказки.</p>`;
 }
 function vFood(){
-  const N=nutrition(), tr=foodDay, M=menu(tr);
+  if(foodDay==null) foodDay=dow(new Date());
+  const N=nutrition(), M=menu(foodDay), tr=!!sessionFor(foodDay), td=dow(new Date());
   const sum=N.prot*4+N.fat*9+N.carb*4;
   return `<h2>Питание</h2>
   <div class="card hero"><div class="k">Цель: ${GOALS[S.profile.goal].toLowerCase()} · ${S.days.length} трен./нед.</div><div class="t num">${N.kcal} ккал в день</div><div class="s num">Тренировочный день ${N.trainK} · день отдыха ${N.restK}</div></div>
@@ -440,10 +484,11 @@ function vFood(){
     <div class="stat"><div class="v">${N.carb} г</div><div class="l">углеводы</div></div></div>
   <div class="bar" style="margin-top:10px" aria-hidden="true"><i style="width:${N.prot*400/sum}%;background:var(--red)"></i><i style="width:${N.fat*900/sum}%;background:var(--yellow)"></i><i style="width:${N.carb*400/sum}%;background:var(--accent)"></i></div>
   <p class="note">Базовый обмен ${N.bmr} ккал (формула Миффлина — Сан-Жеора) × коэффициент активности ${N.act} по числу тренировок${S.profile.goal==='mass'?' + 12% профицит для набора':S.profile.goal==='tone'?' − 15% дефицит для сушки':' + 5% для силовой работы'}. Вода: ~${N.water} л в день.</p>
-  <h3>Меню на день</h3>
-  <div class="seg" id="fd"><button data-v="1" class="${tr?'on':''}">День тренировки</button><button data-v="0" class="${!tr?'on':''}">День отдыха</button></div>
-  <div class="stack" style="margin-top:10px">${M.meals.map(m=>`<div class="card meal"><div class="h"><span>${m.n}</span><span class="muted num">${m.k} ккал</span></div><ul>${m.items.map(([f,g])=>`<li>${F[f][0]} — <span class="num">${g} ${f==='eggs'?'г (~'+Math.round(g/55)+' шт.)':'г'}</span></li>`).join('')}</ul></div>`).join('')}</div>
-  <p class="note num">Итого по меню: ${M.kcal} ккал · Б ${M.tot[0]} / Ж ${M.tot[1]} / У ${M.tot[2]} г. Продукты можно менять на аналоги: курицу на индейку, гречку на булгур, рыбу на тунец.</p>
+  <h3>Меню на неделю</h3>
+  <div class="days" id="fdays">${DAYS.map((d,i)=>`<button data-d="${i}" class="${foodDay===i?'on':''}" ${i===td?'style="text-decoration:underline;text-underline-offset:3px"':''}>${d}</button>`).join('')}</div>
+  <p class="note" style="margin:8px 0 0">${DAYS[foodDay]}${foodDay===td?' (сегодня)':''} · <span class="tag" style="--c:var(${tr?'--accent':'--line'})">${tr?SESS[sessionFor(foodDay)].t:'день отдыха'}</span> · <b class="num" style="color:var(--ink)">${tr?N.trainK:N.restK} ккал</b></p>
+  <div class="stack" style="margin-top:10px">${M.meals.map(m=>`<div class="card meal"><div class="h"><span class="muted" style="font-weight:500">${m.n}</span><span class="muted num">${m.k} ккал</span></div><div style="font-weight:600;font-size:16px">${esc(m.t)}</div><ul>${m.items.map(([f,g])=>`<li>${F[f][0]} — <span class="num">${g} ${f==='eggs'?'г (~'+Math.max(1,Math.round(g/55))+' шт.)':'г'}</span></li>`).join('')}</ul><button class="filters-btn" data-swap="${m.slot}">↻ Другое блюдо</button></div>`).join('')}</div>
+  <p class="note num">Итого за день: ${M.kcal} ккал · Б ${M.tot[0]} / Ж ${M.tot[1]} / У ${M.tot[2]} г. Вес круп и макарон указан в сухом виде, мяса и рыбы — в сыром.</p>
   <h3>Правила</h3><div class="card stack note" style="color:var(--ink)">
     <div>Белок распределяй равномерно: 25–40 г в каждый приём пищи.</div>
     <div>За 1,5–2 часа до тренировки — углеводы и белок, после — то же в течение 2 часов.</div>
@@ -451,7 +496,7 @@ function vFood(){
     <div>Если вес 2 недели стоит на месте — поменяй калорийность на 150–200 ккал.</div></div>
   <p class="note">Расчёт ориентировочный и не заменяет консультацию врача или диетолога.</p>`;
 }
-let foodDay=true;
+let foodDay=null;
 function vMe(){
   const p=S.profile, bmi=p.weight/((p.height/100)**2);
   const bmiT=bmi<18.5?'ниже нормы':bmi<25?'норма':bmi<30?'выше нормы':'ожирение';
@@ -485,7 +530,8 @@ document.addEventListener('click',e=>{
   const eq=t.closest('[data-eq] button'); if(eq){ S.equip[eq.dataset.k]=!S.equip[eq.dataset.k]; save(); render(); return; }
   const d=t.closest('#days button'); if(d){ const i=+d.dataset.d; S.days=S.days.includes(i)?S.days.filter(x=>x!==i):[...S.days,i]; save(); haptic(); render(); return; }
   const lf=t.closest('#lf button'); if(lf){ libFilter=lf.dataset.g; render(); return; }
-  const fd=t.closest('#fd button'); if(fd){ foodDay=fd.dataset.v==='1'; render(); return; }
+  const fd=t.closest('#fdays button'); if(fd){ foodDay=+fd.dataset.d; haptic(); render(); return; }
+  const sw=t.closest('[data-swap]'); if(sw){ S.swap=S.swap||{}; const k=foodDay+':'+sw.dataset.swap; S.swap[k]=((S.swap[k]||0)+1)%7; save(); haptic(); render(); return; }
   if(t.id==='finish'){ const ds=isoDate(new Date()); if(!S.history.includes(ds)) S.history.push(ds); save(); try{tg&&tg.HapticFeedback.notificationOccurred('success')}catch(_){}; render(); return; }
   if(t.id==='reset'){ $('#resetConfirm').innerHTML='<div class="row" style="margin-top:8px"><button class="btn" id="resetYes" style="flex:1;background:var(--red)">Да, сбросить</button><button class="btn ghost" id="resetNo" style="flex:1">Отмена</button></div>'; return; }
   if(t.id==='resetYes'){ S.checks={}; S.history=[]; save(); render(); return; }
