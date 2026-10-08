@@ -121,7 +121,7 @@ const haptic = t => { try{ tg && tg.HapticFeedback && tg.HapticFeedback.impactOc
 /* ---------- state ---------- */
 const KEY='ironday.v1';
 const DEF={tab:'today',profile:{sex:'m',age:27,height:178,weight:76,goal:'mass',level:'beginner'},
-  place:'gym',equip:{dumbbell:false,bar:true,chair:true},type:'full',days:[0,2,4],time:'19:00',checks:{},history:[]};
+  place:'gym',equip:{dumbbell:false,bar:true,chair:true},type:'full',days:[0,2,4],time:'19:00',budget:3500,checks:{},history:[]};
 let S;
 try{ S=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}')); }catch(e){ S=JSON.parse(JSON.stringify(DEF)); }
 S.profile=Object.assign({},DEF.profile,S.profile); S.equip=Object.assign({},DEF.equip,S.equip);
@@ -375,9 +375,49 @@ const DISH={
     {t:'Креветки с булгуром',p:'shrimp',c:'bulgur',x:[['veg',200]]},
     {t:'Тушёная говядина с овощами',p:'beef',c:'bread',x:[['broc',250]]},
     {t:'Паста с тунцом и томатами',p:'tuna',c:'pasta',x:[['tomato',150]]}]};
+// economy dishes: same structure, cheap staples only
+Object.assign(F,{thigh:['Куриное бедро (филе)',19,9,0],liver:['Печень куриная',20,6,1],mince:['Фарш куриный',17,8,0],cabbage:['Капуста',1.5,0,5],carrot:['Морковь',1,0,7],
+  milk:['Молоко 2,5%',3,2.5,4.7],oilS:['Подсолнечное масло',0,100,0],seeds:['Семечки подсолнуха',21,53,11],peas:['Горох колотый (сухой)',21,2,49],frozveg:['Овощная смесь (замор.)',2,0,7]});
+const ECO={
+ b:[{t:'Овсянка на молоке с бананом и яйца',p:'eggs',c:'oats',x:[['milk',200],['fruit',100]]},
+    {t:'Творог с овсянкой и яблоком',p:'cottage',c:'oats',x:[['apple',150]]},
+    {t:'Яичница с хлебом и капустным салатом',p:'eggs',c:'bread',x:[['cabbage',150]]},
+    {t:'Гречка с молоком и яйца',p:'eggs',c:'buck',x:[['milk',200]]},
+    {t:'Сырники на овсяной муке',p:'cottage',c:'oats',x:[['fruit',100]]},
+    {t:'Омлет с хлебом и морковным салатом',p:'eggs',c:'bread',x:[['carrot',150]]},
+    {t:'Рисовая каша на молоке и творог',p:'cottage',c:'rice',x:[['milk',200]]}],
+ l:[{t:'Курица с гречкой и капустным салатом',p:'chicken',c:'buck',x:[['cabbage',200]]},
+    {t:'Макароны по-флотски с куриным фаршем',p:'mince',c:'pasta',x:[['carrot',100]]},
+    {t:'Гороховый суп с курицей',p:'chicken',c:'peas',x:[['carrot',100],['potato',150]]},
+    {t:'Куриные бёдра с рисом и морковью',p:'thigh',c:'rice',x:[['carrot',150]]},
+    {t:'Печень с гречкой и салатом',p:'liver',c:'buck',x:[['cabbage',150]]},
+    {t:'Плов с курицей',p:'thigh',c:'rice',x:[['carrot',150]]},
+    {t:'Чечевица с курицей',p:'chicken',c:'lentil',x:[['carrot',100]]}],
+ s:[{t:'Творог с бананом',p:'cottage',c:'bread',x:[['fruit',100]]},
+    {t:'Кефир и бутерброды с яйцом',p:'eggs',c:'bread',x:[['kefir',250]]},
+    {t:'Творог, хлеб и яблоко',p:'cottage',c:'bread',x:[['apple',150]]},
+    {t:'Омлет-ролл в лаваше',p:'eggs',c:'lavash',x:[['cabbage',80]]},
+    {t:'Творог с овсянкой и кефиром',p:'cottage',c:'oats',x:[['kefir',200]]},
+    {t:'Бутерброды с куриной грудкой',p:'chicken',c:'bread',x:[['cabbage',80]]},
+    {t:'Варёные яйца, хлеб и банан',p:'eggs',c:'bread',x:[['fruit',100]]}],
+ d:[{t:'Минтай с картофелем и капустой',p:'fish',c:'potato',x:[['cabbage',200]]},
+    {t:'Куриные котлеты с гречкой',p:'mince',c:'buck',x:[['frozveg',200]]},
+    {t:'Тушёная капуста с курицей',p:'chicken',c:'bread',x:[['cabbage',300]]},
+    {t:'Минтай с рисом и морковью',p:'fish',c:'rice',x:[['carrot',150]]},
+    {t:'Печень с макаронами',p:'liver',c:'pasta',x:[['frozveg',150]]},
+    {t:'Курица с картофелем и салатом',p:'chicken',c:'potato',x:[['cabbage',200]]},
+    {t:'Омлет с овощами и хлебом',p:'eggs',c:'bread',x:[['frozveg',200]]}]};
+// average retail prices, RUB per kg (per litre for liquids), Russia 2026 — rough
+const PRICE={oats:90,eggs:220,cottage:550,greek:650,kefir:110,cheese:800,chicken:470,turkey:700,beef:900,fish:320,salmon:1900,tuna:1250,shrimp:1200,
+  rice:120,buck:95,pasta:130,bulgur:200,potato:50,lentil:150,bread:180,lavash:220,granola:550,flour:160,veg:200,broc:380,tomato:280,fruit:150,apple:140,berries:550,
+  honey:750,nuts:1300,oil:1500,pb:700,avocado:1500,thigh:420,liver:260,mince:360,cabbage:45,carrot:55,milk:95,oilS:170,seeds:350,peas:80,frozveg:280};
 const SLOT_OFF={b:0,l:3,s:5,d:2};
-function dishFor(day,slot){ const sw=(S.swap||{})[day+':'+slot]||0; return DISH[slot][(day+SLOT_OFF[slot]+sw)%7]; }
-function menu(day){
+function dishFor(day,slot,eco){ const sw=(S.swap||{})[day+':'+slot]||0; return (eco?ECO:DISH)[slot][(day+SLOT_OFF[slot]+sw)%7]; }
+const cost=items=>items.reduce((a,[f,g])=>a+(PRICE[f]||0)*g/1000,0);
+function menu(day,ecoMask){
+  ecoMask=ecoMask||{};
+  const cheapFat=S.budget>0;
+  const NUT=cheapFat?'seeds':'nuts', OIL=cheapFat?'oilS':'oil';
   const train=!!sessionFor(day);
   const N=nutrition(), k=train?N.trainK/N.kcal:N.restK/N.kcal;
   const P=N.prot, Fa=N.fat, C=N.carb*k;
@@ -386,7 +426,7 @@ function menu(day){
     {slot:'l',n:'Обед',w:.32},
     {slot:'s',n:train?'Перед тренировкой':'Перекус',w:.15},
     {slot:'d',n:train?'Ужин после тренировки':'Ужин',w:.28}
-  ].map(m=>Object.assign(m,dishFor(day,m.slot)));
+  ].map(m=>Object.assign(m,dishFor(day,m.slot,ecoMask[m.slot]),{eco:!!ecoMask[m.slot]}));
   const r5=v=>Math.max(5,Math.round(v/5)*5);
   let tot=[0,0,0];
   const out=meals.map(m=>{
@@ -394,20 +434,44 @@ function menu(day){
     const xc=m.x.reduce((a,[f,g])=>a+F[f][3]*g/100,0), xp=m.x.reduce((a,[f,g])=>a+F[f][1]*g/100,0);
     const cg=r5(Math.max(cf[3]>30?20:100,(C*m.w-xc)/cf[3]*100)); const pAfterC=cf[1]*cg/100*.5;
     const pg=r5(Math.max(m.p==='cheese'?40:60,(P*m.w-pAfterC-xp)/pf[1]*100));
-    return {n:m.n,slot:m.slot,t:m.t,items:[[m.p,pg],[m.c,cg],...m.x]};
+    return {n:m.n,slot:m.slot,t:m.t,eco:m.eco,items:[[m.p,pg],[m.c,cg],...m.x.map(a=>a.slice())]};
   });
-  // top up fat with oil / nuts
   out.forEach(m=>m.items.forEach(([f,g])=>{ const d=F[f]; tot[0]+=d[1]*g/100; tot[1]+=d[2]*g/100; tot[2]+=d[3]*g/100; }));
   const fatLeft=Fa-tot[1];
-  if(fatLeft>8){ const ng=r5(Math.min(40,fatLeft*.5/F.nuts[2]*100)); out[2].items.push(['nuts',ng]); const og=r5(Math.max(0,(fatLeft-F.nuts[2]*ng/100))/F.oil[2]*100); if(og>=5){ out[1].items.push(['oil',Math.round(og/2)]); out[3].items.push(['oil',Math.round(og/2)]); } }
-  // scale main portions so the day lands on the calorie target
+  if(fatLeft>8){ const ng=r5(Math.min(40,fatLeft*.5/F[NUT][2]*100)); out[2].items.push([NUT,ng]); const og=r5(Math.max(0,fatLeft-F[NUT][2]*ng/100)); if(og>=5){ out[1].items.push([OIL,Math.round(og/2)]); out[3].items.push([OIL,Math.round(og/2)]); } }
+  const isFat=f=>f===OIL||f===NUT;
   const target=train?N.trainK:N.restK, kc=it=>it.reduce((a,[f,g])=>a+(F[f][1]*4+F[f][2]*9+F[f][3]*4)*g/100,0);
-  const all=out.reduce((a,m)=>a+kc(m.items),0), fixed=out.reduce((a,m)=>a+kc(m.items.slice(2).filter(([f])=>f!=='oil'&&f!=='nuts')),0);
+  const all=out.reduce((a,m)=>a+kc(m.items),0), fixed=out.reduce((a,m)=>a+kc(m.items.slice(2).filter(([f])=>!isFat(f))),0);
   const ratio=Math.max(.6,Math.min(1.4,(target-fixed)/(all-fixed)));
-  out.forEach(m=>m.items.forEach((it,i)=>{ if(i<2||it[0]==='oil'||it[0]==='nuts') it[1]=it[0]==='oil'?Math.max(5,Math.round(it[1]*ratio)):r5(it[1]*ratio); }));
+  out.forEach(m=>m.items.forEach((it,i)=>{ if(i<2||isFat(it[0])) it[1]=it[0]===OIL?Math.max(5,Math.round(it[1]*ratio)):r5(it[1]*ratio); }));
   tot=[0,0,0];
-  out.forEach(m=>{ m.k=0; m.items.forEach(([f,g])=>{ const d=F[f]; const p=d[1]*g/100,fa=d[2]*g/100,c=d[3]*g/100; tot[0]+=p; tot[1]+=fa; tot[2]+=c; m.k+=p*4+fa*9+c*4; }); m.k=Math.round(m.k); });
-  return {meals:out,tot:tot.map(Math.round),kcal:Math.round(tot[0]*4+tot[1]*9+tot[2]*4)};
+  out.forEach(m=>{ m.k=0; m.items.forEach(([f,g])=>{ const d=F[f]; const p=d[1]*g/100,fa=d[2]*g/100,c=d[3]*g/100; tot[0]+=p; tot[1]+=fa; tot[2]+=c; m.k+=p*4+fa*9+c*4; }); m.k=Math.round(m.k); m.cost=cost(m.items); });
+  return {meals:out,tot:tot.map(Math.round),kcal:Math.round(tot[0]*4+tot[1]*9+tot[2]*4),cost:out.reduce((a,m)=>a+m.cost,0)};
+}
+// whole week: start from the regular menu, then swap the priciest meals for budget ones until the week fits
+function weekPlan(){
+  const masks=[0,1,2,3,4,5,6].map(()=>({}));
+  const days=masks.map((m,d)=>menu(d,m));
+  const total=()=>days.reduce((a,x)=>a+x.cost,0);
+  let replaced=0;
+  if(S.budget>0){
+    for(let guard=0;guard<28&&total()>S.budget*.93;guard++){
+      let best=null;
+      days.forEach((x,d)=>x.meals.forEach(m=>{ if(!m.eco&&(!best||m.cost>best.c)) best={d,slot:m.slot,c:m.cost}; }));
+      if(!best) break;
+      masks[best.d][best.slot]=1; days[best.d]=menu(best.d,masks[best.d]); replaced++;
+    }
+  }
+  return {days,total:total(),replaced};
+}
+function shopping(plan){
+  const agg={};
+  plan.days.forEach(x=>x.meals.forEach(m=>m.items.forEach(([f,g])=>{ agg[f]=(agg[f]||0)+g; })));
+  return Object.entries(agg).map(([f,g])=>{
+    const liquid=['kefir','milk','oil','oilS'].includes(f);
+    const q=f==='eggs'?Math.ceil(g/55)+' шт.':g>=1000?(g/1000).toFixed(1).replace('.',',')+(liquid?' л':' кг'):Math.round(g/10)*10+(liquid?' мл':' г');
+    return {f,n:F[f][0],q,c:(PRICE[f]||0)*g/1000};
+  }).sort((a,b)=>b.c-a.c);
 }
 
 /* ---------- UI ---------- */
@@ -474,7 +538,8 @@ function vLib(){
 }
 function vFood(){
   if(foodDay==null) foodDay=dow(new Date());
-  const N=nutrition(), M=menu(foodDay), tr=!!sessionFor(foodDay), td=dow(new Date());
+  const N=nutrition(), W=weekPlan(), M=W.days[foodDay], tr=!!sessionFor(foodDay), td=dow(new Date());
+  const rub=v=>Math.round(v).toLocaleString('ru-RU')+' ₽', B=S.budget, over=B>0&&W.total>B;
   const sum=N.prot*4+N.fat*9+N.carb*4;
   return `<h2>Питание</h2>
   <div class="card hero"><div class="k">Цель: ${GOALS[S.profile.goal].toLowerCase()} · ${S.days.length} трен./нед.</div><div class="t num">${N.kcal} ккал в день</div><div class="s num">Тренировочный день ${N.trainK} · день отдыха ${N.restK}</div></div>
@@ -484,11 +549,22 @@ function vFood(){
     <div class="stat"><div class="v">${N.carb} г</div><div class="l">углеводы</div></div></div>
   <div class="bar" style="margin-top:10px" aria-hidden="true"><i style="width:${N.prot*400/sum}%;background:var(--red)"></i><i style="width:${N.fat*900/sum}%;background:var(--yellow)"></i><i style="width:${N.carb*400/sum}%;background:var(--accent)"></i></div>
   <p class="note">Базовый обмен ${N.bmr} ккал (формула Миффлина — Сан-Жеора) × коэффициент активности ${N.act} по числу тренировок${S.profile.goal==='mass'?' + 12% профицит для набора':S.profile.goal==='tone'?' − 15% дефицит для сушки':' + 5% для силовой работы'}. Вода: ~${N.water} л в день.</p>
+  <h3>Бюджет на неделю</h3>
+  <div class="card stack">
+    <div class="field"><label for="budget">Сумма на продукты, ₽ (0 — без ограничений)</label><input id="budget" type="number" inputmode="numeric" min="0" step="100" value="${B}"></div>
+    <div class="row" style="justify-content:space-between;align-items:baseline"><span>Меню на неделю</span><b class="num" style="font-size:18px;color:var(${over?'--red':'--ink'})">${rub(W.total)}${B>0?' <span class="muted" style="font-weight:500;font-size:14px">из '+rub(B)+'</span>':''}</b></div>
+    ${B>0?`<div class="bar"><i style="width:${Math.min(100,W.total/B*100)}%;background:var(${over?'--red':'--green'})"></i></div>`:''}
+    <div class="note" style="color:var(--ink)">${B<=0?'Ограничение выключено: меню собрано без учёта цен.':over?`Даже с самыми дешёвыми блюдами не хватает ${rub(W.total-B)}. Можно поднять бюджет или покупать курицу и творог крупными упаковками по акции.`:`Укладываемся, остаётся ${rub(B-W.total)} (запас на округление до упаковок). ${W.replaced?W.replaced+' из 28 блюд заменены на бюджетные с тем же КБЖУ.':'Все блюда из основного меню.'} В среднем ${rub(W.total/7)} в день.`}</div>
+  </div>
   <h3>Меню на неделю</h3>
   <div class="days" id="fdays">${DAYS.map((d,i)=>`<button data-d="${i}" class="${foodDay===i?'on':''}" ${i===td?'style="text-decoration:underline;text-underline-offset:3px"':''}>${d}</button>`).join('')}</div>
   <p class="note" style="margin:8px 0 0">${DAYS[foodDay]}${foodDay===td?' (сегодня)':''} · <span class="tag" style="--c:var(${tr?'--accent':'--line'})">${tr?SESS[sessionFor(foodDay)].t:'день отдыха'}</span> · <b class="num" style="color:var(--ink)">${tr?N.trainK:N.restK} ккал</b></p>
-  <div class="stack" style="margin-top:10px">${M.meals.map(m=>`<div class="card meal"><div class="h"><span class="muted" style="font-weight:500">${m.n}</span><span class="muted num">${m.k} ккал</span></div><div style="font-weight:600;font-size:16px">${esc(m.t)}</div><ul>${m.items.map(([f,g])=>`<li>${F[f][0]} — <span class="num">${g} ${f==='eggs'?'г (~'+Math.max(1,Math.round(g/55))+' шт.)':'г'}</span></li>`).join('')}</ul><button class="filters-btn" data-swap="${m.slot}">↻ Другое блюдо</button></div>`).join('')}</div>
-  <p class="note num">Итого за день: ${M.kcal} ккал · Б ${M.tot[0]} / Ж ${M.tot[1]} / У ${M.tot[2]} г. Вес круп и макарон указан в сухом виде, мяса и рыбы — в сыром.</p>
+  <div class="stack" style="margin-top:10px">${M.meals.map(m=>`<div class="card meal"><div class="h"><span class="muted" style="font-weight:500">${m.n}</span><span class="muted num">${m.k} ккал · ~${rub(m.cost)}</span></div><div style="font-weight:600;font-size:16px">${esc(m.t)}${m.eco?' <span class="pill" style="vertical-align:2px">бюджетно</span>':''}</div><ul>${m.items.map(([f,g])=>`<li>${F[f][0]} — <span class="num">${g} ${f==='eggs'?'г (~'+Math.max(1,Math.round(g/55))+' шт.)':'г'}</span></li>`).join('')}</ul><button class="filters-btn" data-swap="${m.slot}">↻ Другое блюдо</button></div>`).join('')}</div>
+  <p class="note num">Итого за день: ${M.kcal} ккал · Б ${M.tot[0]} / Ж ${M.tot[1]} / У ${M.tot[2]} г · ~${rub(M.cost)}. Вес круп и макарон указан в сухом виде, мяса и рыбы — в сыром.</p>
+  <h3>Список покупок на неделю</h3>
+  <div class="card"><div class="stack" style="gap:6px">${shopping(W).map(s=>`<div class="row num" style="justify-content:space-between;flex-wrap:nowrap;gap:8px"><span style="min-width:0">${s.n} <span class="muted">— ${s.q}</span></span><span class="muted" style="white-space:nowrap">${rub(s.c)}</span></div>`).join('')}
+  <div class="row num" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:8px;font-weight:600"><span>Итого</span><span>${rub(W.total)}</span></div></div></div>
+  <p class="note">Количество указано по весу. Продукты продаются упаковками, поэтому остатки переходят на следующую неделю. Цены средние по России и примерные: в твоём магазине и на акциях они могут отличаться на 10–20%.</p>
   <h3>Правила</h3><div class="card stack note" style="color:var(--ink)">
     <div>Белок распределяй равномерно: 25–40 г в каждый приём пищи.</div>
     <div>За 1,5–2 часа до тренировки — углеводы и белок, после — то же в течение 2 часов.</div>
@@ -542,6 +618,7 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.p){ const v=t.tagName==='SELECT'?t.value:parseFloat(t.value); if(t.tagName==='SELECT'||!isNaN(v)){ S.profile[t.dataset.p]=v; save(); render(); } }
   if(t.id==='time'){ S.time=t.value; save(); }
+  if(t.id==='budget'){ S.budget=Math.max(0,Math.round(+t.value||0)); save(); haptic(); render(); }
 });
 
 /* ---------- exercise sheet ---------- */
